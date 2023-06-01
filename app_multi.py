@@ -339,6 +339,18 @@ with app:
         'A lot of inspiration from what\'s already out there, including [zomehwh/rvc-models](https://huggingface.co/spaces/zomehwh/rvc-models) & [DJQmUKV/rvc-inference](https://huggingface.co/spaces/DJQmUKV/rvc-inference).\n '  # thx noqa
     )
 
+    with gr.Tab("YouTube Video to Audio"):
+        with gr.Row():
+            with gr.Column():
+                ydl_url_input  = gr.Textbox(label="Enter URL YouTube")
+                start = gr.Number(value=0, label="Start Time (seconds)")
+                end = gr.Number(value=15, label="End Time (seconds)")
+                ydl_url_submit = gr.Button("Convert Now", variant="primary")
+            with gr.Column():
+                ydl_audio_output = gr.Audio(label="Audio from YouTube")
+
+    ydl_url_submit.click(fn=youtube_downloader, inputs=[ydl_url_input, start, end], outputs=[ydl_audio_output])
+
     with gr.Row():
         with gr.Column():
             with gr.Tab('Audio conversion'):
