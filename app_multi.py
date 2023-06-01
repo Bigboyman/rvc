@@ -17,7 +17,6 @@ import gradio as gr
 import torch
 
 import numpy as np
-import librosa
 
 import edge_tts
 
