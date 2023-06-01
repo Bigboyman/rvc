@@ -2,6 +2,7 @@ from typing import Union
 
 from argparse import ArgumentParser
 from pathlib import Path
+import subprocess
 
 import asyncio
 import json
@@ -518,4 +519,4 @@ app.queue(
     concurrency_count=1,
     max_size=20,
     api_open=args.api
-).launch()
+).launch(show_error=True)
