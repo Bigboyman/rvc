@@ -1,0 +1,11 @@
+{
+    "model": "gambino.pth",
+    "feat_index": "added_IVF536_Flat_nprobe_1.index",
+    "speaker_id": 0,
+
+    "name": "Gambino",
+    "author": "Meganini",
+    "source": "ALL",
+    "note": "TEst",
+    "icon": "Hamza.png"
+}

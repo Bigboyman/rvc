@@ -1,0 +1,11 @@
+{
+    "model": "hamza.pth",
+    "feat_index": "added_IVF1506_Flat_nprobe_1.index",
+    "speaker_id": 0,
+
+    "name": "Hamza",
+    "author": "Meganini",
+    "source": "ALL",
+    "note": "Epochs - 700",
+    "icon": "Hamza.png"
+}

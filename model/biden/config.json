@@ -1,0 +1,11 @@
+{
+    "model": "biden.pth",
+    "feat_index": "added_IVF2606_Flat_nprobe_1_v2.index",
+    "speaker_id": 0,
+
+    "name": "Joe biden",
+    "author": "Week old roadkill",
+    "source": "ALL",
+    "note": "Trained on ~32 mins of speeches, silence truncated, crepe - 64, epochs - 300",
+    "icon": "biden.png"
+}
