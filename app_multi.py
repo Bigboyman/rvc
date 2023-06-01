@@ -3,6 +3,8 @@ from typing import Union
 from argparse import ArgumentParser
 from pathlib import Path
 import subprocess
+import librosa
+import os
 
 import asyncio
 import json
@@ -28,6 +30,8 @@ from vc_infer_pipeline import VC
     
 # Reference: https://huggingface.co/spaces/zomehwh/rvc-models/blob/main/app.py#L21  # noqa
 in_hf_space = getenv('SYSTEM') == 'spaces'
+
+high_quality = True
 
 # Argument parsing
 arg_parser = ArgumentParser()
@@ -169,6 +173,72 @@ def youtube_downloader(
     else:
         return None
 
+def audio_separated(audio_input, progress=gr.Progress()):
+    # start progress
+    progress(progress=0, desc="Starting...")
+    time.sleep(0.1)
+
+    # check file input
+    if audio_input is None:
+        # show progress
+        for i in progress.tqdm(range(100), desc="Please wait..."):
+            time.sleep(0.01)
+            
+        return (None, None, 'Please input audio.')
+
+    # create filename
+    filename = str(random.randint(10000,99999))+datetime.now().strftime("%d%m%Y%H%M%S")
+    
+    # progress
+    progress(progress=0.10, desc="Please wait...")
+    
+    # make dir output
+    os.makedirs("output", exist_ok=True)
+    
+    # progress
+    progress(progress=0.20, desc="Please wait...")
+    
+    # write
+    if high_quality:
+        write(filename+".wav", audio_input[0], audio_input[1])
+    else:
+        write(filename+".mp3", audio_input[0], audio_input[1])
+        
+    # progress
+    progress(progress=0.50, desc="Please wait...")
+
+    # demucs process
+    if high_quality:
+        command_demucs = "python3 -m demucs --two-stems=vocals -d cpu "+filename+".wav -o output"
+    else:
+        command_demucs = "python3 -m demucs --two-stems=vocals --mp3 --mp3-bitrate 128 -d cpu "+filename+".mp3 -o output"
+    
+    os.system(command_demucs)
+    
+    # progress
+    progress(progress=0.70, desc="Please wait...")
+    
+    # remove file audio
+    if high_quality:
+        command_delete = "rm -v ./"+filename+".wav"
+    else:
+        command_delete = "rm -v ./"+filename+".mp3"
+    
+    os.system(command_delete)
+    
+    # progress
+    progress(progress=0.80, desc="Please wait...")
+    
+    # progress
+    for i in progress.tqdm(range(80,100), desc="Please wait..."):
+        time.sleep(0.1)
+
+    if high_quality:
+        return "./output/htdemucs/"+filename+"/vocals.wav","./output/htdemucs/"+filename+"/no_vocals.wav","Successfully..."
+    else:
+        return "./output/htdemucs/"+filename+"/vocals.mp3","./output/htdemucs/"+filename+"/no_vocals.mp3","Successfully..."
+
+        
 # https://github.com/fumiama/Retrieval-based-Voice-Conversion-WebUI/blob/main/infer-web.py#L118  # noqa
 def vc_func(
     input_audio, model_index, pitch_adjust, f0_method, feat_ratio,
@@ -340,17 +410,23 @@ with app:
         'A lot of inspiration from what\'s already out there, including [zomehwh/rvc-models](https://huggingface.co/spaces/zomehwh/rvc-models) & [DJQmUKV/rvc-inference](https://huggingface.co/spaces/DJQmUKV/rvc-inference).\n '  # thx noqa
     )
 
-    with gr.Tab("YouTube Video to Audio"):
+    with gr.Tab("🤗 - B站视频提取声音"):
         with gr.Row():
             with gr.Column():
-                ydl_url_input  = gr.Textbox(label="Enter URL YouTube")
-                start = gr.Number(value=0, label="Start Time (seconds)")
-                end = gr.Number(value=15, label="End Time (seconds)")
-                ydl_url_submit = gr.Button("Convert Now", variant="primary")
+                ydl_url_input  = gr.Textbox(label="B站视频网址(请填写相应的BV号)", value = "https://www.bilibili.com/video/BV...")
+                start = gr.Number(value=0, label="起始时间 (秒)")
+                end = gr.Number(value=15, label="结束时间 (秒)")
+                ydl_url_submit = gr.Button("提取声音文件吧", variant="primary")
+                as_audio_submit = gr.Button("去除背景音吧", variant="primary")
             with gr.Column():
-                ydl_audio_output = gr.Audio(label="Audio from YouTube")
-
+                ydl_audio_output = gr.Audio(label="Audio from Bilibili")
+                as_audio_input  = ydl_audio_output
+                as_audio_vocals    = gr.Audio(label="Vocal only")
+                as_audio_no_vocals = gr.Audio(label="Music only", type="filepath")
+                as_audio_message   = gr.Textbox(label="Message", visible=False)
+                
     ydl_url_submit.click(fn=youtube_downloader, inputs=[ydl_url_input, start, end], outputs=[ydl_audio_output])
+    as_audio_submit.click(fn=audio_separated, inputs=[as_audio_input], outputs=[as_audio_vocals, as_audio_no_vocals, as_audio_message], show_progress=True, queue=True)
 
     with gr.Row():
         with gr.Column():
