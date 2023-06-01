@@ -435,7 +435,7 @@ with app:
     with gr.Row():
         with gr.Column():
             with gr.Tab('Audio conversion'):
-                input_audio = gr.Audio(label='Input audio')
+                input_audio = as_audio_vocals
 
                 vc_convert_btn = gr.Button('Convert', variant='primary')
 
