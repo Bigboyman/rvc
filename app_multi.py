@@ -1,6 +1,7 @@
 from typing import Union
 
 from argparse import ArgumentParser
+from pathlib import Path
 
 import asyncio
 import json
@@ -127,6 +128,45 @@ print(f'Models loaded: {len(loaded_models)}')
 # Edge TTS speakers
 tts_speakers_list = asyncio.get_event_loop().run_until_complete(edge_tts.list_voices())  # noqa
 
+
+# Bilibili
+def youtube_downloader(
+    video_identifier,
+    start_time,
+    end_time,
+    output_filename="track.wav",
+    num_attempts=5,
+    url_base="",
+    quiet=False,
+    force=True,
+):
+    output_path = Path(output_filename)
+    if output_path.exists():
+        if not force:
+            return output_path
+        else:
+            output_path.unlink()
+
+    quiet = "--quiet --no-warnings" if quiet else ""
+    command = f"""
+        yt-dlp {quiet} -x --audio-format wav -f bestaudio -o "{output_filename}" --download-sections "*{start_time}-{end_time}" "{url_base}{video_identifier}"  # noqa: E501
+    """.strip()
+
+    attempts = 0
+    while True:
+        try:
+            _ = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            attempts += 1
+            if attempts == num_attempts:
+                return None
+        else:
+            break
+
+    if output_path.exists():
+        return output_path
+    else:
+        return None
 
 # https://github.com/fumiama/Retrieval-based-Voice-Conversion-WebUI/blob/main/infer-web.py#L118  # noqa
 def vc_func(
