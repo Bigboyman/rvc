@@ -604,11 +604,11 @@ async def _example_edge_tts(
 
 
 with app:
-    gr.Markdown(
-        '## A simplistic Web interface\n'
-        'RVC interface, project based on [RVC-WebUI](https://github.com/fumiama/Retrieval-based-Voice-Conversion-WebUI)'  # thx noqa
-        'A lot of inspiration from what\'s already out there, including [zomehwh/rvc-models](https://huggingface.co/spaces/zomehwh/rvc-models) & [DJQmUKV/rvc-inference](https://huggingface.co/spaces/DJQmUKV/rvc-inference).\n '  # thx noqa
-    )
+    gr.HTML("<center>"
+            "<h1>🥳🎶🎡 - AI歌手，RVC歌声转换 + AI变声</h1>"
+            "</center>")
+    gr.Markdown("### <center>🦄 - 能够自动提取视频中的声音，并去除背景音；Powered by [RVC-Project](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI)</center>")
+    gr.Markdown("### <center>更多精彩应用，敬请关注[滔滔AI](http://www.talktalkai.com)；滔滔AI，为爱滔滔！💕</center>")
 
     with gr.Tab("🤗 - B站视频提取声音"):
         with gr.Row():
@@ -621,8 +621,8 @@ with app:
             with gr.Column():
                 ydl_audio_output = gr.Audio(label="Audio from Bilibili")
                 as_audio_input  = ydl_audio_output
-                as_audio_vocals    = gr.Audio(label="Vocal only")
-                as_audio_no_vocals = gr.Audio(label="Music only", type="filepath")
+                as_audio_vocals    = gr.Audio(label="歌曲人声部分")
+                as_audio_no_vocals = gr.Audio(label="Music only", type="filepath", visible=False)
                 as_audio_message   = gr.Textbox(label="Message", visible=False)
                 
     ydl_url_submit.click(fn=youtube_downloader, inputs=[ydl_url_input, start, end], outputs=[ydl_audio_output])
@@ -630,15 +630,15 @@ with app:
                     
     with gr.Row():
         with gr.Column():
-            with gr.Tab('Audio conversion'):
+            with gr.Tab('🎶 - 歌声转换'):
                 input_audio = as_audio_vocals
                 vc_convert_btn = gr.Button('进行歌声转换吧！', variant='primary')
                 full_song = gr.Button("加入歌曲伴奏吧！", variant="primary")
                 new_song = gr.Audio(label="Full song", type="filepath")
 
-            with gr.Tab('TTS conversion'):
+            with gr.Tab('🎙️ - 文本转语音'):
                 tts_input = gr.TextArea(
-                    label='TTS input text'
+                    label='请填写您想要转换的文本'
                 )
                 tts_speaker = gr.Dropdown(
                     [
@@ -652,7 +652,7 @@ with app:
                     type='index'
                 )
 
-                tts_convert_btn = gr.Button('Convert', variant='primary')
+                tts_convert_btn = gr.Button('进行文本转语音吧', variant='primary')
                 
             with gr.Tab("📺 - 音乐视频"):
                 with gr.Row():
@@ -680,7 +680,7 @@ with app:
                 interactive=True
             )
 
-            with gr.Accordion('Advanced options', open=False):
+            with gr.Accordion('更多设置', open=False):
                 feat_ratio = gr.Slider(
                     label='Feature ratio',
                     minimum=0,
@@ -725,7 +725,8 @@ with app:
                     for m in loaded_models
                 ],
                 label='Model',
-                type='index'
+                type='index',
+                value=3
             )
 
             # Model info
