@@ -1,6 +1,6 @@
 {
     "models": [
-        "syz"
+        "macmiller", "bob", "arianagrande", "syz"
     ],
     "examples": {
         "vc": [],
