@@ -637,8 +637,9 @@ with app:
                 new_song = gr.Audio(label="AI歌手+伴奏", type="filepath")
 
             with gr.Tab('🎙️ - 文本转语音'):
-                tts_input = gr.TextArea(
-                    label='请填写您想要转换的文本'
+                tts_input = gr.Textbox(
+                    label='请填写您想要转换的文本(中英皆可)',
+                    lines=3
                 )
                 tts_speaker = gr.Dropdown(
                     [
@@ -648,11 +649,11 @@ with app:
                         )
                         for s in tts_speakers_list
                     ],
-                    label='TTS speaker',
+                    label='请选择一个相应语言的说话人',
                     type='index'
                 )
 
-                tts_convert_btn = gr.Button('进行文本转语音吧', variant='primary')
+                tts_convert_btn = gr.Button('进行AI变声吧', variant='primary')
                 
             with gr.Tab("📺 - 音乐视频"):
                 with gr.Row():
@@ -725,8 +726,7 @@ with app:
                     for m in loaded_models
                 ],
                 label='Model',
-                type='index',
-                value=3
+                type='index'
             )
 
             # Model info
