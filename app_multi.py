@@ -12,6 +12,7 @@ import asyncio
 import json
 import hashlib
 from os import path, getenv
+from pydub import AudioSegment
 
 import gradio as gr
 
@@ -137,6 +138,16 @@ print(f'Models loaded: {len(loaded_models)}')
 # Edge TTS speakers
 tts_speakers_list = asyncio.get_event_loop().run_until_complete(edge_tts.list_voices())  # noqa
 
+# mix vocal and non-vocal
+def mix(audio1, audio2):
+  sound1 = AudioSegment.from_file(audio1)
+  sound2 = AudioSegment.from_file(audio2)
+  length = len(sound1)
+  mixed = sound1[:length].overlay(sound2)
+
+  mixed.export("song.wav", format="wav")
+
+  return "song.wav"
 
 # Bilibili
 def youtube_downloader(
@@ -436,8 +447,9 @@ with app:
         with gr.Column():
             with gr.Tab('Audio conversion'):
                 input_audio = as_audio_vocals
-
-                vc_convert_btn = gr.Button('Convert', variant='primary')
+                vc_convert_btn = gr.Button('进行歌声转换吧！', variant='primary')
+                full_song = gr.Button("加入歌曲伴奏吧！", variant="primary")
+                new_song = gr.Audio(label="Full song", type="filepath")
 
             with gr.Tab('TTS conversion'):
                 tts_input = gr.TextArea(
@@ -586,6 +598,8 @@ with app:
         [output_audio, output_msg],
         api_name='tts_conversion'
     )
+
+    full_song.click(fn=mix, inputs=[output_audio, as_audio_no_vocals], outputs=[new_song])
 
     model_index.change(
         update_model_info,
