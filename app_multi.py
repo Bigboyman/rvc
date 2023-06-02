@@ -457,8 +457,8 @@ def vc_func(
 
     # https://huggingface.co/spaces/zomehwh/rvc-models/blob/main/app.py#L49
     # Can be change well, we will see
-    if (audio_npy.shape[0] / audio_samp) > 60 and in_hf_space:
-        return (None, 'Input audio is longer than 60 secs.')
+    if (audio_npy.shape[0] / audio_samp) > 600 and in_hf_space:
+        return (None, 'Input audio is longer than 600 secs.')
 
     # Bloody hell: https://stackoverflow.com/questions/26921836/
     if audio_npy.dtype != np.float32:  # :thonk:
