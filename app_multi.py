@@ -613,7 +613,7 @@ with app:
     with gr.Tab("🤗 - B站视频提取声音"):
         with gr.Row():
             with gr.Column():
-                ydl_url_input  = gr.Textbox(label="B站视频网址(请填写相应的BV号)", value = "https://www.bilibili.com/video/BV...")
+                ydl_url_input  = gr.Textbox(label="B站视频网址(可直接填写相应的BV号)", value = "https://www.bilibili.com/video/BV...")
                 start = gr.Number(value=0, label="起始时间 (秒)")
                 end = gr.Number(value=15, label="结束时间 (秒)")
                 ydl_url_submit = gr.Button("提取声音文件吧", variant="primary")
@@ -808,6 +808,7 @@ with app:
     )
     
     gr.Markdown("### <center>注意❗：请不要生成会对个人以及组织造成侵害的内容，此程序仅供科研、学习及个人娱乐使用。</center>")
+    gr.Markdown("### <center>🧸 - 如何使用此程序：填写视频网址和视频起止时间后，依次点击“提取声音文件吧”、“去除背景音吧”、“进行歌声转换吧！”、“加入歌曲伴奏吧！”四个按键即可。</center>")
     gr.HTML('''
         <div class="footer">
                     <p>🌊🏞️🎶 - 江水东流急，滔滔无尽声。 明·顾璘
