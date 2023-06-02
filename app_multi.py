@@ -539,7 +539,7 @@ with app:
                     elem_id='model_info'
                 )
 
-            output_audio = gr.Audio(label='Output audio')
+            output_audio = gr.Audio(label='Output audio', type="filepath")
             output_msg = gr.Textbox(label='Output message')
 
     multi_examples = multi_cfg.get('examples')
