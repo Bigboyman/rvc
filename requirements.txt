@@ -1,4 +1,6 @@
 gradio
+matplotlib
+moviepy
 yt-dlp
 pydub
 demucs
