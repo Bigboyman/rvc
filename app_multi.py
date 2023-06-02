@@ -732,7 +732,7 @@ with app:
             # Model info
             with gr.Box():
                 model_info = gr.Markdown(
-                    '### Model info\n'
+                    '### AI歌手信息\n'
                     'Please select a model from dropdown above.',
                     elem_id='model_info'
                 )
