@@ -726,7 +726,8 @@ with app:
                     for m in loaded_models
                 ],
                 label='请选择您的AI歌手',
-                type='index'
+                type='index',
+                value="ALL - Stefanie"
             )
 
             # Model info
