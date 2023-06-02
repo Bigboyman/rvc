@@ -634,7 +634,7 @@ with app:
                 input_audio = as_audio_vocals
                 vc_convert_btn = gr.Button('进行歌声转换吧！', variant='primary')
                 full_song = gr.Button("加入歌曲伴奏吧！", variant="primary")
-                new_song = gr.Audio(label="Full song", type="filepath")
+                new_song = gr.Audio(label="AI歌手+伴奏", type="filepath")
 
             with gr.Tab('🎙️ - 文本转语音'):
                 tts_input = gr.TextArea(
