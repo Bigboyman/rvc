@@ -8,6 +8,12 @@ import os
 import time
 import random
 
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+from moviepy.editor import *
+from moviepy.video.io.VideoFileClip import VideoFileClip
+
 import asyncio
 import json
 import hashlib
@@ -17,8 +23,6 @@ from pydub import AudioSegment
 import gradio as gr
 
 import torch
-
-import numpy as np
 
 import edge_tts
 
@@ -137,6 +141,187 @@ print(f'Models loaded: {len(loaded_models)}')
 
 # Edge TTS speakers
 tts_speakers_list = asyncio.get_event_loop().run_until_complete(edge_tts.list_voices())  # noqa
+
+# Make MV
+def make_bars_image(height_values, index, new_height):
+    
+    # Define the size of the image
+    width = 512  
+    height = new_height
+    
+    # Create a new image with a transparent background
+    image = Image.new('RGBA', (width, height), color=(0, 0, 0, 0))
+    
+    # Get the image drawing context
+    draw = ImageDraw.Draw(image)
+    
+    # Define the rectangle width and spacing
+    rect_width = 2
+    spacing = 2
+    
+    # Define the list of height values for the rectangles
+    #height_values = [20, 40, 60, 80, 100, 80, 60, 40]
+    num_bars = len(height_values)
+    # Calculate the total width of the rectangles and the spacing
+    total_width = num_bars * rect_width + (num_bars - 1) * spacing
+    
+    # Calculate the starting position for the first rectangle
+    start_x = int((width - total_width) / 2)
+    # Define the buffer size
+    buffer_size = 80
+    # Draw the rectangles from left to right
+    x = start_x
+    for i, height in enumerate(height_values):
+        
+        # Define the rectangle coordinates
+        y0 = buffer_size
+        y1 = height + buffer_size
+        x0 = x
+        x1 = x + rect_width
+
+        # Draw the rectangle
+        draw.rectangle([x0, y0, x1, y1], fill='white')  
+        
+        # Move to the next rectangle position
+        if i < num_bars - 1:
+            x += rect_width + spacing
+        
+
+    # Rotate the image by 180 degrees
+    image = image.rotate(180)
+    
+    # Mirror the image
+    image = image.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    # Save the image
+    image.save('audio_bars_'+ str(index) + '.png')
+
+    return 'audio_bars_'+ str(index) + '.png'
+
+def db_to_height(db_value):
+    # Scale the dB value to a range between 0 and 1
+    scaled_value = (db_value + 80) / 80
+    
+    # Convert the scaled value to a height between 0 and 100
+    height = scaled_value * 50
+    
+    return height
+
+def infer(title, audio_in, image_in):
+    # Load the audio file
+    audio_path = audio_in
+    audio_data, sr = librosa.load(audio_path)
+
+    # Get the duration in seconds
+    duration = librosa.get_duration(y=audio_data, sr=sr)
+    
+    # Extract the audio data for the desired time
+    start_time = 0 # start time in seconds
+    end_time = duration # end time in seconds
+    
+    start_index = int(start_time * sr)
+    end_index = int(end_time * sr)
+    
+    audio_data = audio_data[start_index:end_index]
+    
+    # Compute the short-time Fourier transform
+    hop_length = 512
+
+    
+    stft = librosa.stft(audio_data, hop_length=hop_length)
+    spectrogram = librosa.amplitude_to_db(np.abs(stft), ref=np.max)
+
+    # Get the frequency values
+    freqs = librosa.fft_frequencies(sr=sr, n_fft=stft.shape[0])
+
+    # Select the indices of the frequency values that correspond to the desired frequencies
+    n_freqs = 114
+    freq_indices = np.linspace(0, len(freqs) - 1, n_freqs, dtype=int)
+    
+    # Extract the dB values for the desired frequencies
+    db_values = []
+    for i in range(spectrogram.shape[1]):
+        db_values.append(list(zip(freqs[freq_indices], spectrogram[freq_indices, i])))
+    
+    # Print the dB values for the first time frame
+    print(db_values[0])
+
+    proportional_values = []
+
+    for frame in db_values:
+        proportional_frame = [db_to_height(db) for f, db in frame]
+        proportional_values.append(proportional_frame)
+
+    print(proportional_values[0])
+    print("AUDIO CHUNK: " + str(len(proportional_values)))
+
+    # Open the background image
+    background_image = Image.open(image_in)
+    
+    # Resize the image while keeping its aspect ratio
+    bg_width, bg_height = background_image.size
+    aspect_ratio = bg_width / bg_height
+    new_width = 512
+    new_height = int(new_width / aspect_ratio)
+    resized_bg = background_image.resize((new_width, new_height))
+
+    # Apply black cache for better visibility of the white text
+    bg_cache = Image.open('black_cache.png')
+    resized_bg.paste(bg_cache, (0, resized_bg.height - bg_cache.height), mask=bg_cache)
+
+    # Create a new ImageDraw object
+    draw = ImageDraw.Draw(resized_bg)
+    
+    # Define the text to be added
+    text = title
+    font = ImageFont.truetype("Lato-Regular.ttf", 16)
+    text_color = (255, 255, 255) # white color
+    
+    # Calculate the position of the text
+    text_width, text_height = draw.textsize(text, font=font)
+    x = 30
+    y = new_height - 70
+    
+    # Draw the text on the image
+    draw.text((x, y), text, fill=text_color, font=font)
+
+    # Save the resized image
+    resized_bg.save('resized_background.jpg')
+    
+    generated_frames = []
+    for i, frame in enumerate(proportional_values): 
+        bars_img = make_bars_image(frame, i, new_height)
+        bars_img = Image.open(bars_img)
+        # Paste the audio bars image on top of the background image
+        fresh_bg = Image.open('resized_background.jpg')
+        fresh_bg.paste(bars_img, (0, 0), mask=bars_img)
+        # Save the image
+        fresh_bg.save('audio_bars_with_bg' + str(i) + '.jpg')
+        generated_frames.append('audio_bars_with_bg' + str(i) + '.jpg')
+    print(generated_frames)
+
+    # Create a video clip from the images
+    clip = ImageSequenceClip(generated_frames, fps=len(generated_frames)/(end_time-start_time))
+    audio_clip = AudioFileClip(audio_in)
+    clip = clip.set_audio(audio_clip)
+    # Set the output codec
+    codec = 'libx264'
+    audio_codec = 'aac'
+    # Save the video to a file
+    clip.write_videofile("my_video.mp4", codec=codec, audio_codec=audio_codec)
+
+    retimed_clip = VideoFileClip("my_video.mp4")
+
+    # Set the desired frame rate
+    new_fps = 25
+    
+    # Create a new clip with the new frame rate
+    new_clip = retimed_clip.set_fps(new_fps)
+    
+    # Save the new clip as a new video file
+    new_clip.write_videofile("my_video_retimed.mp4", codec=codec, audio_codec=audio_codec)
+
+    return "my_video_retimed.mp4"
 
 # mix vocal and non-vocal
 def mix(audio1, audio2):
@@ -442,7 +627,7 @@ with app:
                 
     ydl_url_submit.click(fn=youtube_downloader, inputs=[ydl_url_input, start, end], outputs=[ydl_audio_output])
     as_audio_submit.click(fn=audio_separated, inputs=[as_audio_input], outputs=[as_audio_vocals, as_audio_no_vocals, as_audio_message], show_progress=True, queue=True)
-
+                    
     with gr.Row():
         with gr.Column():
             with gr.Tab('Audio conversion'):
@@ -468,7 +653,19 @@ with app:
                 )
 
                 tts_convert_btn = gr.Button('Convert', variant='primary')
-
+                
+            with gr.Tab("📺 - 音乐视频"):
+                with gr.Row():
+                    with gr.Column():
+                        inp1 = gr.Textbox(label="为视频配上精彩的文案吧(选填;英文)")
+                        inp2 = new_song
+                        inp3 = gr.Image(source='upload', type='filepath', label="上传一张背景图片吧")
+                        btn = gr.Button("生成您的专属音乐视频吧", variant="primary")
+              
+                    with gr.Column():
+                        out1 = gr.Video(label='您的专属音乐视频')
+            btn.click(fn=infer, inputs=[inp1, inp2, inp3], outputs=[out1])
+            
             pitch_adjust = gr.Slider(
                 label='Pitch',
                 minimum=-24,
@@ -608,6 +805,14 @@ with app:
         show_progress=False,
         queue=False
     )
+    
+    gr.Markdown("### <center>注意❗：请不要生成会对个人以及组织造成侵害的内容，此程序仅供科研、学习及个人娱乐使用。</center>")
+    gr.HTML('''
+        <div class="footer">
+                    <p>🌊🏞️🎶 - 江水东流急，滔滔无尽声。 明·顾璘
+                    </p>
+        </div>
+    ''')
 
 app.queue(
     concurrency_count=1,
